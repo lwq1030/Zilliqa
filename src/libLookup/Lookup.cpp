@@ -5585,7 +5585,7 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
         }
 
         if (toSend.size() >= NUM_NODES_TO_SEND_LOOKUP) {
-          return;
+          break;
         }
       }
     }

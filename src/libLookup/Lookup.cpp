@@ -5658,7 +5658,7 @@ void Lookup::SendTxnPacketToNodes(const uint32_t oldNumShards,
     return;
   }
 
-  SendTxnPacketToShard(oldNumShards, newNumShards);
+  SendTxnPacketPrepare(oldNumShards, newNumShards);
 
   for (unsigned int i = 0; i < newNumShards + 1; i++) {
     SendTxnPacketToShard(i, i == newNumShards);

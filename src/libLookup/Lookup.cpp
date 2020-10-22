@@ -455,18 +455,6 @@ bool Lookup::GenTxnToSend(size_t num_txn,
       nonce = AccountStore::GetInstance().GetAccount(addr)->GetNonce();
     }
 
-    if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
-                                     num_txn, txns)) {
-      LOG_GENERAL(WARNING, "Failed to get txns from file");
-      continue;
-    }
-
-    copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
-
-    LOG_GENERAL(INFO, "[Batching] Last Nonce sent "
-                          << nonce + num_txn << " of Addr " << addr.hex());
-    txns.clear();
-
     if (!GetTxnFromFile::GetFromFile(
             addr, static_cast<uint32_t>(nonce) + num_txn + 1,
             NUM_TXN_TO_DS_PER_ACCOUNT +
@@ -478,6 +466,22 @@ bool Lookup::GenTxnToSend(size_t num_txn,
     }
 
     copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
+
+    LOG_GENERAL(INFO, "[Batching] Last Nonce sent to DS "
+                          << nonce + num_txn << " of Addr " << addr.hex());
+
+    txns.clear();
+    if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
+                                     num_txn, txns)) {
+      LOG_GENERAL(WARNING, "Failed to get txns from file");
+      continue;
+    }
+
+    copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
+
+    LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
+                          << txnShard << nonce + num_txn << " of Addr "
+                          << addr.hex());
   }
 
   return true;

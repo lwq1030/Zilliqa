@@ -439,49 +439,44 @@ bool Lookup::GenTxnToSend(size_t num_txn,
     LOG_GENERAL(INFO, "Empty genesis wallet!");
     return false;
   }
-  const unsigned int NUM_TXN_TO_DS_PER_ACCOUNT =
-      num_txn / myGenesisAccounts.size();
+
+  if (myGenesisAccounts.size() == 1) {
+    LOG_GENERAL(INFO,
+                "genesis wallet should have atleast 2 genesis accounts! Last "
+                "one will be used for for DS");
+    return false;
+  }
 
   for (unsigned int i = 0; i < myGenesisAccounts.size(); i++) {
-    const auto& addr = myGenesisAccounts.at(i);
-    auto txnShard = Transaction::GetShardIndex(addr, numShards);
-    txns.clear();
-
     uint64_t nonce;
-
+    const auto& addr = myGenesisAccounts.at(i);
     {
       shared_lock<shared_timed_mutex> lock(
           AccountStore::GetInstance().GetPrimaryMutex());
       nonce = AccountStore::GetInstance().GetAccount(addr)->GetNonce();
     }
 
-    if (!GetTxnFromFile::GetFromFile(
-            addr, static_cast<uint32_t>(nonce) + 1,
-            NUM_TXN_TO_DS_PER_ACCOUNT +
-                (i != myGenesisAccounts.size() - 1
-                     ? 0
-                     : num_txn % myGenesisAccounts.size()),
-            txns)) {
-      LOG_GENERAL(WARNING, "Failed to get txns for DS");
-    }
-
-    copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
-
-    LOG_GENERAL(INFO, "[Batching] Last Nonce sent to DS "
-                          << nonce + num_txn << " of Addr " << addr.hex());
-
     txns.clear();
-    if (!GetTxnFromFile::GetFromFile(
-            addr, static_cast<uint32_t>(nonce) + num_txn + 1, num_txn, txns)) {
+    if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
+                                     num_txn, txns)) {
       LOG_GENERAL(WARNING, "Failed to get txns from file");
       continue;
     }
 
-    copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
+    // account used for txn dispatching to DS
+    if (i == myGenesisAccounts.size() - 1) {
+      copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
 
-    LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
-                          << txnShard << nonce + (num_txn * 2) << " of Addr "
-                          << addr.hex());
+      LOG_GENERAL(INFO, "[Batching] Last Nonce sent to DS "
+                            << nonce + num_txn << " of Addr " << addr.hex());
+    } else {  // To shards
+      auto txnShard = Transaction::GetShardIndex(addr, numShards);
+      copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
+
+      LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
+                            << txnShard << " " << nonce + num_txn << " of Addr "
+                            << addr.hex());
+    }
   }
 
   return true;
@@ -5607,8 +5602,10 @@ void Lookup::SendTxnPacketToDS(const uint32_t oldNumShards,
                                const uint32_t newNumShards) {
   LOG_MARKER();
 
+  // This will generate txns for all shards include ds shard.
   SendTxnPacketPrepare(oldNumShards, newNumShards);
 
+  // But will only send txn pkt to ds-shard
   SendTxnPacketToShard(newNumShards, true);
 }
 

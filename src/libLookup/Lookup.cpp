@@ -258,6 +258,13 @@ void Lookup::SetLookupNodes() {
         continue;
       }
       m_myGenesisAccounts1.emplace_back(Address(addrBytes));
+
+      const auto& addrStr2 = DS_GENESIS_WALLETS.at(i);
+      addrBytes.clear();
+      if (!DataConversion::HexStrToUint8Vec(addrStr2, addrBytes)) {
+        continue;
+      }
+      m_myDSGenesisAccounts1.emplace_back(Address(addrBytes));
     }
 
     for (unsigned int i = indexMid; i < indexEnd; i++) {
@@ -267,6 +274,13 @@ void Lookup::SetLookupNodes() {
         continue;
       }
       m_myGenesisAccounts2.emplace_back(Address(addrBytes));
+
+      const auto& addrStr2 = DS_GENESIS_WALLETS.at(i);
+      addrBytes.clear();
+      if (!DataConversion::HexStrToUint8Vec(addrStr2, addrBytes)) {
+        continue;
+      }
+      m_myDSGenesisAccounts2.emplace_back(Address(addrBytes));
     }
   }
 }
@@ -431,51 +445,53 @@ bool Lookup::GenTxnToSend(size_t num_txn,
     return false;
   }
 
-  const vector<Address>& myGenesisAccounts = m_mediator.m_currentEpochNum % 2
-                                                 ? m_myGenesisAccounts1
-                                                 : m_myGenesisAccounts2;
-
-  if (myGenesisAccounts.empty()) {
-    LOG_GENERAL(INFO, "Empty genesis wallet!");
-    return false;
-  }
-
-  if (myGenesisAccounts.size() == 1) {
-    LOG_GENERAL(INFO,
-                "genesis wallet should have atleast 2 genesis accounts! Last "
-                "one will be used for for DS");
-    return false;
-  }
-
-  for (unsigned int i = 0; i < myGenesisAccounts.size(); i++) {
-    uint64_t nonce;
-    const auto& addr = myGenesisAccounts.at(i);
-    {
-      shared_lock<shared_timed_mutex> lock(
-          AccountStore::GetInstance().GetPrimaryMutex());
-      nonce = AccountStore::GetInstance().GetAccount(addr)->GetNonce();
+  int j = 0;
+  while (j++ < 2) {
+    vector<Address> myGenesisAccounts;
+    if (j == 1) {
+      myGenesisAccounts = m_mediator.m_currentEpochNum % 2
+                              ? m_myGenesisAccounts1
+                              : m_myGenesisAccounts2;
+    } else {
+      myGenesisAccounts = m_mediator.m_currentEpochNum % 2
+                              ? m_myDSGenesisAccounts1
+                              : m_myDSGenesisAccounts2;
     }
 
-    txns.clear();
-    if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
-                                     num_txn, txns)) {
-      LOG_GENERAL(WARNING, "Failed to get txns from file");
-      continue;
+    if (myGenesisAccounts.empty()) {
+      LOG_GENERAL(INFO, "Empty genesis wallet!");
+      return false;
     }
 
-    // account used for txn dispatching to DS
-    if (i == myGenesisAccounts.size() - 1) {
-      copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
+    for (unsigned int i = 0; i < myGenesisAccounts.size(); i++) {
+      uint64_t nonce;
+      const auto& addr = myGenesisAccounts.at(i);
+      {
+        shared_lock<shared_timed_mutex> lock(
+            AccountStore::GetInstance().GetPrimaryMutex());
+        nonce = AccountStore::GetInstance().GetAccount(addr)->GetNonce();
+      }
 
-      LOG_GENERAL(INFO, "[Batching] Last Nonce sent to DS "
-                            << nonce + num_txn << " of Addr " << addr.hex());
-    } else {  // To shards
-      auto txnShard = Transaction::GetShardIndex(addr, numShards);
-      copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
+      txns.clear();
+      if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
+                                       num_txn, txns)) {
+        LOG_GENERAL(WARNING, "Failed to get txns from file");
+        continue;
+      }
 
-      LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
-                            << txnShard << " " << nonce + num_txn << " of Addr "
-                            << addr.hex());
+      if (j == 1) {  // shard txn dispatching
+        auto txnShard = Transaction::GetShardIndex(addr, numShards);
+        copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
+
+        LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
+                              << txnShard << " " << nonce + num_txn
+                              << " of Addr " << addr.hex());
+      } else {  // ds txn dispatching
+        copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
+
+        LOG_GENERAL(INFO, "[Batching] Last Nonce sent to DS "
+                              << nonce + num_txn << " of Addr " << addr.hex());
+      }
     }
   }
 

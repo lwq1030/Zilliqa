@@ -81,6 +81,8 @@ class Lookup : public Executable {
   // This is used only for testing with gentxn
   std::vector<Address> m_myGenesisAccounts1;
   std::vector<Address> m_myGenesisAccounts2;
+  std::vector<Address> m_myDSGenesisAccounts1;
+  std::vector<Address> m_myDSGenesisAccounts2;
 
   // To ensure that the confirm of DS node rejoin won't be later than
   // It receiving a new DS block

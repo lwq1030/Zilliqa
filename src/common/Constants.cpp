@@ -67,6 +67,19 @@ const vector<string> ReadAccountsFromConstantsFile(const string& propName) {
   return result;
 }
 
+const vector<string> ReadDSAccountsFromConstantsFile(const string& propName) {
+  auto pt = PTree::GetInstance();
+  vector<string> result;
+  for (auto& acc : pt.get_child("node.ds_accounts")) {
+    auto child = acc.second.get_optional<string>(propName);
+    if (child) {
+      // LOG_GENERAL("constants " << child.get());
+      result.push_back(child.get());
+    }
+  }
+  return result;
+}
+
 const vector<pair<uint64_t, uint32_t>>
 ReadVerifierExclusionListFromConstantsFile() {
   auto pt = PTree::GetInstance();
@@ -667,6 +680,12 @@ const unsigned int VIEWCHANGE_TIME{
 const vector<string> GENESIS_WALLETS{
     ReadAccountsFromConstantsFile("wallet_address")};
 const vector<string> GENESIS_KEYS{ReadAccountsFromConstantsFile("private_key")};
+
+// Genesis accounts for ds txn dispatching ( TEST Purpose Only )
+const vector<string> DS_GENESIS_WALLETS{
+    ReadDSAccountsFromConstantsFile("wallet_address")};
+const vector<string> DS_GENESIS_KEYS{
+    ReadDSAccountsFromConstantsFile("private_key")};
 
 // Verifier
 const std::string VERIFIER_PATH{

@@ -447,6 +447,10 @@ extern const unsigned int VIEWCHANGE_TIME;
 extern const std::vector<std::string> GENESIS_WALLETS;
 extern const std::vector<std::string> GENESIS_KEYS;
 
+// Genesis accounts for ds txn dispatching ( TEST Purpose Only )
+extern const std::vector<std::string> DS_GENESIS_WALLETS;
+extern const std::vector<std::string> DS_GENESIS_KEYS;
+
 // DBVerifier constants
 extern const std::string VERIFIER_PATH;
 extern const std::string VERIFIER_PUBKEY;

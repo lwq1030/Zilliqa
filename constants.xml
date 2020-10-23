@@ -370,6 +370,10 @@
         <account>
             <wallet_address>cc02a3c906612cc5bdb087a30e6093c9f0aa04fc</wallet_address>
         </account>
+         <!-- These are the genesis accounts used for ds txn dispatching for test purpose only -->
+        <ds_account>
+            <wallet_address></wallet_address>
+        </ds_account>
     </accounts>
     <!-- The remaining constants below are auto-populated -->
     <lookups>

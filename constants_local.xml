@@ -375,7 +375,7 @@
         <account>
             <wallet_address></wallet_address>
         </account>
-    </ds_accounts>   
+    </ds_accounts>
     <!-- For constants.xml, the remaining constants below are auto-populated -->
     <lookups>
         <peer>

@@ -456,7 +456,7 @@ bool Lookup::GenTxnToSend(size_t num_txn,
     }
 
     if (!GetTxnFromFile::GetFromFile(
-            addr, static_cast<uint32_t>(nonce) + num_txn + 1,
+            addr, static_cast<uint32_t>(nonce) + 1,
             NUM_TXN_TO_DS_PER_ACCOUNT +
                 (i != myGenesisAccounts.size() - 1
                      ? 0
@@ -471,8 +471,8 @@ bool Lookup::GenTxnToSend(size_t num_txn,
                           << nonce + num_txn << " of Addr " << addr.hex());
 
     txns.clear();
-    if (!GetTxnFromFile::GetFromFile(addr, static_cast<uint32_t>(nonce) + 1,
-                                     num_txn, txns)) {
+    if (!GetTxnFromFile::GetFromFile(
+            addr, static_cast<uint32_t>(nonce) + num_txn + 1, num_txn, txns)) {
       LOG_GENERAL(WARNING, "Failed to get txns from file");
       continue;
     }
@@ -480,7 +480,7 @@ bool Lookup::GenTxnToSend(size_t num_txn,
     copy(txns.begin(), txns.end(), back_inserter(mp[txnShard]));
 
     LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
-                          << txnShard << nonce + num_txn << " of Addr "
+                          << txnShard << nonce + (num_txn * 2) << " of Addr "
                           << addr.hex());
   }
 

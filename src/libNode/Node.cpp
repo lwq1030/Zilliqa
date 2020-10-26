@@ -111,13 +111,21 @@ void Node::PopulateAccounts(bool temp) {
 void Node::AddBalanceToGenesisAccount() {
   LOG_MARKER();
 
-  const uint128_t balance_each = TOTAL_GENESIS_TOKEN / GENESIS_WALLETS.size();
-  const uint128_t balance_left = TOTAL_GENESIS_TOKEN % (GENESIS_WALLETS.size());
+  dev::strings allGenesis;
+  allGenesis.reserve(GENESIS_WALLETS.size() +
+                     DS_GENESIS_WALLETS.size());  // preallocate memory
+  allGenesis.insert(allGenesis.end(), GENESIS_WALLETS.begin(),
+                    GENESIS_WALLETS.end());
+  allGenesis.insert(allGenesis.end(), DS_GENESIS_WALLETS.begin(),
+                    DS_GENESIS_WALLETS.end());
+
+  const uint128_t balance_each = TOTAL_GENESIS_TOKEN / allGenesis.size();
+  const uint128_t balance_left = TOTAL_GENESIS_TOKEN % (allGenesis.size());
 
   const uint64_t nonce{0};
   bool moduloCredited = false;
 
-  for (auto& walletHexStr : GENESIS_WALLETS) {
+  for (auto& walletHexStr : allGenesis) {
     bytes addrBytes;
     if (!DataConversion::HexStrToUint8Vec(walletHexStr, addrBytes)) {
       continue;

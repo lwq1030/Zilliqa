@@ -452,15 +452,21 @@ bool Lookup::GenTxnToSend(size_t num_txn,
       myGenesisAccounts = m_mediator.m_currentEpochNum % 2
                               ? m_myGenesisAccounts1
                               : m_myGenesisAccounts2;
+      LOG_GENERAL(INFO, "Shard-level Genesis accounts: ");
     } else {
       myGenesisAccounts = m_mediator.m_currentEpochNum % 2
                               ? m_myDSGenesisAccounts1
                               : m_myDSGenesisAccounts2;
+      LOG_GENERAL(INFO, "DS-level Genesis accounts: ");
     }
 
     if (myGenesisAccounts.empty()) {
       LOG_GENERAL(INFO, "Empty genesis wallet!");
       return false;
+    }
+
+    for (auto addr : myGenesisAccounts) {
+      LOG_GENERAL(INFO, addr.hex())
     }
 
     for (unsigned int i = 0; i < myGenesisAccounts.size(); i++) {

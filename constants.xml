@@ -374,7 +374,7 @@
     <!-- These are the genesis accounts used for ds txn dispatching for test purpose only -->
     <ds_accounts>
         <account>
-            <wallet_address></wallet_address>
+            <wallet_address>ee06b3c906612cc5bdb087a30e6093c9f0aa04fd</wallet_address>
         </account>
     </ds_accounts>
     <!-- The remaining constants below are auto-populated -->

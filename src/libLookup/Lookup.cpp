@@ -458,9 +458,8 @@ bool Lookup::GenTxnToSend(size_t num_txn,
                               : m_myDSGenesisAccounts2;
     }
 
-    for (unsigned int i = 0; i < myGenesisAccounts.size(); i++) {
+    for (const auto& addr : myGenesisAccounts) {
       uint64_t nonce;
-      const auto& addr = myGenesisAccounts.at(i);
       {
         shared_lock<shared_timed_mutex> lock(
             AccountStore::GetInstance().GetPrimaryMutex());
@@ -5674,6 +5673,20 @@ void Lookup::SendTxnPacketToNodes(const uint32_t oldNumShards,
 
   for (unsigned int i = 0; i < newNumShards + 1; i++) {
     SendTxnPacketToShard(i, i == newNumShards);
+  }
+
+  // Fix: To prepare for new set of transaction for second epoch
+  // since txns from first epoch will be hard confirmed only on receving FB.
+  // And we need to avoid sending same txns in second epoch after receivng MB
+  // for first epoch
+  SendTxnPacketPrepare(oldNumShards, newNumShards);
+  // Now we have generated txns for all shards and ds-shard.
+  // But we only need them for normal shards to be send later after recv soft
+  // confirmation.
+  {
+    lock_guard<mutex> g(m_txnShardMapGeneratedMutex);
+    // remove for ds-shard
+    m_txnShardMapGenerated[newNumShards].clear();
   }
 }
 

@@ -460,7 +460,20 @@ bool Lookup::GenTxnToSend(size_t num_txn,
 
     for (const auto& addr : myGenesisAccounts) {
       uint64_t nonce;
-      {
+      // shard txn dispatching
+      bool fromAcctStore = true;
+      if (j == 1) {
+        if ((m_mediator.m_currentEpochNum % NUM_FINAL_BLOCK_PER_POW == 0) &&
+            (m_gentxnAddrLatestNonceSent.find(addr) !=
+             m_gentxnAddrLatestNonceSent.end())) {
+          nonce = m_gentxnAddrLatestNonceSent[addr];
+          fromAcctStore = false;
+        } else {
+          m_gentxnAddrLatestNonceSent.erase(addr);
+        }
+      }
+
+      if (fromAcctStore) {
         shared_lock<shared_timed_mutex> lock(
             AccountStore::GetInstance().GetPrimaryMutex());
         nonce = AccountStore::GetInstance().GetAccount(addr)->GetNonce();
@@ -480,6 +493,7 @@ bool Lookup::GenTxnToSend(size_t num_txn,
         LOG_GENERAL(INFO, "[Batching] Last Nonce sent to shard-"
                               << txnShard << " " << nonce + num_txn
                               << " of Addr " << addr.hex());
+        m_gentxnAddrLatestNonceSent[addr] = nonce + num_txn;
       } else {  // ds txn dispatching
         copy(txns.begin(), txns.end(), back_inserter(mp[numShards]));
 
@@ -5423,6 +5437,7 @@ void Lookup::SenderTxnBatchThread(const uint32_t oldNumShards,
       if (!m_mediator.GetIsVacuousEpoch()) {
         numShards = m_mediator.m_ds->GetNumShards();
         if (newDSEpoch) {
+          m_gentxnAddrLatestNonceSent.clear();
           SendTxnPacketToNodes(oldNumShards, numShards);
         } else {
           SendTxnPacketToDS(oldNumShards, numShards);

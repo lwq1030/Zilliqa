@@ -130,6 +130,7 @@ class Lookup : public Executable {
 
   TxnShardMap m_txnShardMap;
   TxnShardMap m_txnShardMapGenerated;
+  std::map<Address, uint64_t> m_gentxnAddrLatestNonceSent;
 
   // Get StateDeltas from seed
   std::mutex m_mutexSetStateDeltasFromSeed;

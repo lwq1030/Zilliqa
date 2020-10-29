@@ -5511,6 +5511,13 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
 
   bytes msg = {MessageType::NODE, NodeInstructionType::FORWARDTXNPACKET};
   bool result = false;
+  uint64_t epoch;
+  if (toDS || m_mediator.m_currentEpochNum % NUM_FINAL_BLOCK_PER_POW == 0) {
+    epoch = m_mediator.m_currentEpochNum;
+  } else {
+    // pkt supposed to be part of txblk : (m_mediator.m_currentEpochNum + 1)
+    epoch = m_mediator.m_currentEpochNum + 1;
+  }
 
   {
     unique_lock<mutex> g(m_txnShardMapMutex, defer_lock);
@@ -5524,8 +5531,7 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
     LOG_GENERAL(INFO, "Txn number generated: " << transactionNumber);
 
     if (LOG_PARAMETERS) {
-      LOG_STATE("[TXNPKT][" << m_mediator.m_currentEpochNum
-                            << "] Shard=" << shardId << " NumTx="
+      LOG_STATE("[TXNPKT][" << epoch << "] Shard=" << shardId << " NumTx="
                             << (GetTxnFromShardMap(shardId).size() +
                                 m_txnShardMapGenerated[shardId].size()));
     }
@@ -5537,15 +5543,14 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
     }
 
     result = Messenger::SetNodeForwardTxnBlock(
-        msg, MessageOffset::BODY, m_mediator.m_currentEpochNum,
+        msg, MessageOffset::BODY, epoch,
         m_mediator.m_dsBlockChain.GetLastBlock().GetHeader().GetBlockNum(),
         shardId, m_mediator.m_selfKey, GetTxnFromShardMap(shardId),
         m_txnShardMapGenerated[shardId]);
   }
 
   if (!result) {
-    LOG_EPOCH(WARNING, m_mediator.m_currentEpochNum,
-              "Messenger::SetNodeForwardTxnBlock failed.");
+    LOG_EPOCH(WARNING, epoch, "Messenger::SetNodeForwardTxnBlock failed.");
     LOG_GENERAL(WARNING, "Cannot create packet for " << shardId << " shard");
     return;
   }

@@ -1071,7 +1071,7 @@ bool Node::ProcessFinalBlockCore(uint64_t& dsBlockNumber,
     CommitPendingTxnBuffer();
     if (!ARCHIVAL_LOOKUP && m_mediator.m_lookup->GetIsServer() &&
         !isVacuousEpoch && !m_mediator.GetIsVacuousEpoch() &&
-        ((m_mediator.m_currentEpochNum + NUM_VACUOUS_EPOCHS + 1) %
+        ((m_mediator.m_currentEpochNum + NUM_VACUOUS_EPOCHS) %
          NUM_FINAL_BLOCK_PER_POW) != 0) {
       m_mediator.m_lookup->SenderTxnBatchThread(numShards);
     }

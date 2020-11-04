@@ -5512,7 +5512,9 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
   bytes msg = {MessageType::NODE, NodeInstructionType::FORWARDTXNPACKET};
   bool result = false;
   uint64_t epoch;
-  if (toDS || m_mediator.m_currentEpochNum % NUM_FINAL_BLOCK_PER_POW == 0) {
+  if (toDS || ((m_mediator.m_currentEpochNum % NUM_FINAL_BLOCK_PER_POW == 0) &&
+               !m_mediator.m_node->IsSoftConfirmationReceived(
+                   m_mediator.m_currentEpochNum, shardId))) {
     epoch = m_mediator.m_currentEpochNum;
   } else {
     // pkt supposed to be part of txblk : (m_mediator.m_currentEpochNum + 1)

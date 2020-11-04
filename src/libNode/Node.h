@@ -426,6 +426,7 @@ class Node : public Executable {
   void AddGenesisInfo(SyncType syncType);
 
   void SoftConfirmForwardedTransactions(const MBnForwardedTxnEntry& entry);
+
   void ClearSoftConfirmedTransactions();
   void UpdateGovProposalRemainingVoteInfo();
   bool CheckIfGovProposalActive();
@@ -801,6 +802,10 @@ class Node : public Executable {
 
   bool GetSoftConfirmedTransaction(const TxnHash& txnHash,
                                    TxBodySharedPtr& tptr);
+
+  bool IsSoftConfirmationReceived(const uint64_t epochNum,
+                                  const uint32_t shardId);
+
   void WaitForNextTwoBlocksBeforeRejoin();
 
   bool UpdateShardNodeIdentity();

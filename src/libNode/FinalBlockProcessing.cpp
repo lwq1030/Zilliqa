@@ -1186,6 +1186,20 @@ void Node::CommitForwardedTransactions(const MBnForwardedTxnEntry& entry) {
   }
 }
 
+bool Node::IsSoftConfirmationReceived(const uint64_t epochNum,
+                                      const uint32_t shardId) {
+  lock_guard<mutex> g(m_mutexMBnForwardedTxnBuffer);
+  auto entry = m_mbnForwardedTxnBuffer.find(epochNum);
+  if (entry != m_mbnForwardedTxnBuffer.end()) {
+    for (auto& mb : entry->second) {
+      if (mb.m_microBlock.GetHeader().GetShardId() == shardId) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void Node::SoftConfirmForwardedTransactions(const MBnForwardedTxnEntry& entry) {
   if (!LOOKUP_NODE_MODE) {
     LOG_GENERAL(WARNING,

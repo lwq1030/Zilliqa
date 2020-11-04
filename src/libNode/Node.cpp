@@ -1905,8 +1905,11 @@ bool Node::ProcessTxnPacketFromLookupCore(const bytes& message,
   }
 
   if (LOG_PARAMETERS) {
+    int64_t epoch = (m_mediator.m_ds->m_mode == DirectoryService::Mode::IDLE)
+                        ? epochNum
+                        : m_mediator.m_currentEpochNum;
     LOG_STATE("[TXNPKT-BEG]["
-              << m_mediator.m_currentEpochNum << "] PktEpoch=" << epochNum
+              << epoch << "] PktEpoch=" << epochNum
               << " PktSize=" << message.size() << " Shard=" << shardId
               << " Lookup=" << string(lookupPubKey).substr(0, 8));
   }

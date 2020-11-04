@@ -5499,7 +5499,8 @@ void Lookup::RectifyTxnShardMap(const uint32_t oldNumShards,
   LOG_GENERAL(INFO, "Elapsed time for exchange " << elaspedTimeMs);
 }
 
-void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
+void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS,
+                                  bool afterSoftConfirmation) {
   LOG_MARKER();
 
   if (!LOOKUP_NODE_MODE) {
@@ -5511,15 +5512,8 @@ void Lookup::SendTxnPacketToShard(const uint32_t shardId, bool toDS) {
 
   bytes msg = {MessageType::NODE, NodeInstructionType::FORWARDTXNPACKET};
   bool result = false;
-  uint64_t epoch;
-  if (toDS || ((m_mediator.m_currentEpochNum % NUM_FINAL_BLOCK_PER_POW == 0) &&
-               !m_mediator.m_node->IsSoftConfirmationReceived(
-                   m_mediator.m_currentEpochNum, shardId))) {
-    epoch = m_mediator.m_currentEpochNum;
-  } else {
-    // pkt supposed to be part of txblk : (m_mediator.m_currentEpochNum + 1)
-    epoch = m_mediator.m_currentEpochNum + 1;
-  }
+  uint64_t epoch = afterSoftConfirmation ? m_mediator.m_currentEpochNum + 1
+                                         : m_mediator.m_currentEpochNum;
 
   {
     unique_lock<mutex> g(m_txnShardMapMutex, defer_lock);

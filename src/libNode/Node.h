@@ -803,9 +803,6 @@ class Node : public Executable {
   bool GetSoftConfirmedTransaction(const TxnHash& txnHash,
                                    TxBodySharedPtr& tptr);
 
-  bool IsSoftConfirmationReceived(const uint64_t epochNum,
-                                  const uint32_t shardId);
-
   void WaitForNextTwoBlocksBeforeRejoin();
 
   bool UpdateShardNodeIdentity();

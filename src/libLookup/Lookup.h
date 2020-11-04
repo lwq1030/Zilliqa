@@ -320,7 +320,8 @@ class Lookup : public Executable {
                             const uint32_t newNumShards);
   void SendTxnPacketToDS(const uint32_t oldNumShards,
                          const uint32_t newNumShards);
-  void SendTxnPacketToShard(const uint32_t shardId, bool toDS);
+  void SendTxnPacketToShard(const uint32_t shardId, bool toDS,
+                            bool afterSoftConfirmation = false);
 
   bool ProcessEntireShardingStructure();
   bool ProcessGetDSInfoFromSeed(const bytes& message, unsigned int offset,

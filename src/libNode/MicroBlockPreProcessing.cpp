@@ -1249,11 +1249,11 @@ bool Node::RunConsensusOnMicroBlockWhenShardLeader() {
   };
 
   LOG_STATE(
-      "[MICON]["
+      "[MICON-BEG]["
       << setw(15) << left << m_mediator.m_selfPeer.GetPrintableIPAddress()
       << "]["
       << m_mediator.m_txBlockChain.GetLastBlock().GetHeader().GetBlockNum() + 1
-      << "][" << m_myshardId << "] BEGIN");
+      << "][" << m_myshardId << "]");
 
   cl->StartConsensus(preprepAnnouncementGeneratorFunc,
                      newMBAnnouncementReadinessFunc, BROADCAST_GOSSIP_MODE);

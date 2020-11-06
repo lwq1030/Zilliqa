@@ -243,10 +243,10 @@ bool Node::ProcessMicroBlockConsensusCore(const bytes& message,
     m_microblock->SetCoSignatures(*m_consensusObject);
 
     if (m_isPrimary) {
-      LOG_STATE("[MICON][" << setw(15) << left
-                           << m_mediator.m_selfPeer.GetPrintableIPAddress()
-                           << "][" << m_mediator.m_currentEpochNum << "]["
-                           << m_myshardId << "] DONE");
+      LOG_STATE("[MICON-END][" << setw(15) << left
+                               << m_mediator.m_selfPeer.GetPrintableIPAddress()
+                               << "][" << m_mediator.m_currentEpochNum << "]["
+                               << m_myshardId << "]");
 
       if (LOG_PARAMETERS) {
         LOG_STATE("[MITXN][" << m_microblock->GetHeader().GetNumTxs() << "]");

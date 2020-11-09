@@ -234,22 +234,23 @@ void Lookup::SetLookupNodes() {
       <account></account> -> for lookup 2 shard 1 set 2
       <account></account> -> for lookup 2 shard 2 set 2
   */
-  if (USE_REMOTE_TXN_CREATOR && GENESIS_WALLETS.size() > 0) {
+  if (USE_REMOTE_TXN_CREATOR) {
     const unsigned int myLookupIndex = std::distance(
         m_lookupNodesStatic.begin(),
         find_if(m_lookupNodesStatic.begin(), m_lookupNodesStatic.end(),
                 [&](const PairOfNode& x) {
                   return (m_mediator.m_selfKey.second == x.first);
                 }));
-    const unsigned int indexBeg =
-        myLookupIndex * (GENESIS_WALLETS.size() / NUM_DISPATCHERS);
-    const unsigned int indexMid =
-        indexBeg + (GENESIS_WALLETS.size() / NUM_DISPATCHERS) / 2;
-    const unsigned int indexEnd =
-        (myLookupIndex + 1) * (GENESIS_WALLETS.size() / NUM_DISPATCHERS);
 
     LOG_GENERAL(INFO, "I am dispatcher number " << (myLookupIndex + 1) << " of "
                                                 << NUM_DISPATCHERS);
+    // Accounts for dispatching to shard
+    unsigned int indexBeg =
+        myLookupIndex * (GENESIS_WALLETS.size() / NUM_DISPATCHERS);
+    unsigned int indexMid =
+        indexBeg + (GENESIS_WALLETS.size() / NUM_DISPATCHERS) / 2;
+    unsigned int indexEnd =
+        (myLookupIndex + 1) * (GENESIS_WALLETS.size() / NUM_DISPATCHERS);
 
     for (unsigned int i = indexBeg; i < indexMid; i++) {
       const auto& addrStr = GENESIS_WALLETS.at(i);
@@ -258,13 +259,6 @@ void Lookup::SetLookupNodes() {
         continue;
       }
       m_myGenesisAccounts1.emplace_back(Address(addrBytes));
-
-      const auto& addrStr2 = DS_GENESIS_WALLETS.at(i);
-      addrBytes.clear();
-      if (!DataConversion::HexStrToUint8Vec(addrStr2, addrBytes)) {
-        continue;
-      }
-      m_myDSGenesisAccounts1.emplace_back(Address(addrBytes));
     }
 
     for (unsigned int i = indexMid; i < indexEnd; i++) {
@@ -274,10 +268,27 @@ void Lookup::SetLookupNodes() {
         continue;
       }
       m_myGenesisAccounts2.emplace_back(Address(addrBytes));
+    }
 
-      const auto& addrStr2 = DS_GENESIS_WALLETS.at(i);
-      addrBytes.clear();
-      if (!DataConversion::HexStrToUint8Vec(addrStr2, addrBytes)) {
+    // Accounts for dispatching to ds
+    indexBeg = myLookupIndex * (DS_GENESIS_WALLETS.size() / NUM_DISPATCHERS);
+    indexMid = indexBeg + (DS_GENESIS_WALLETS.size() / NUM_DISPATCHERS) / 2;
+    indexEnd =
+        (myLookupIndex + 1) * (DS_GENESIS_WALLETS.size() / NUM_DISPATCHERS);
+
+    for (unsigned int i = indexBeg; i < indexMid; i++) {
+      const auto& addrStr = DS_GENESIS_WALLETS.at(i);
+      bytes addrBytes;
+      if (!DataConversion::HexStrToUint8Vec(addrStr, addrBytes)) {
+        continue;
+      }
+      m_myDSGenesisAccounts1.emplace_back(Address(addrBytes));
+    }
+
+    for (unsigned int i = indexMid; i < indexEnd; i++) {
+      const auto& addrStr = DS_GENESIS_WALLETS.at(i);
+      bytes addrBytes;
+      if (!DataConversion::HexStrToUint8Vec(addrStr, addrBytes)) {
         continue;
       }
       m_myDSGenesisAccounts2.emplace_back(Address(addrBytes));

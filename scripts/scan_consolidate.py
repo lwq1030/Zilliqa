@@ -376,7 +376,7 @@ def make_csv_header():
     with open(CSV_FILENAME, 'w',newline='\n') as csvfile:
         w = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         w.writerow((['Epoch #', 'Shard Details', '', '', '', '', '', '', '', '', '', 'DS Details', '', '', '', '', '', '', '', '', 'Epoch Details', '', '']))
-        w.writerow((['', 'ID', 'Pkts Disp\'d', 'FB receipt->Pkt proc (ms)', 'Pkt Proc (ms) (bytes)', 'TxPool Bef', 'Txn Proc (ms)', 'Cons (ms)', 'TxPool Aft', '#Txns', 'MB Size (bytes)', 'Pkts Disp\'d', 'Pkt Proc (ms) (bytes)', 'Wait MBs (ms)', 'TxPool Bef', 'Txn Proc (ms)', 'Cons (ms)', 'TxPool Aft', '#Txns', 'MB Size (bytes)', 'Block Time (ms)', 'Gas Used', 'TPS']))
+        w.writerow((['', 'ID', 'Pkts Disp\'d', 'MB sent->Pkt proc (ms)', 'Pkt Proc (ms) (bytes)', 'TxPool Bef', 'Txn Proc (ms)', 'Cons (ms)', 'TxPool Aft', '#Txns', 'MB Size (bytes)', 'Pkts Disp\'d', 'Pkt Proc (ms) (bytes)', 'Wait MBs (ms)', 'TxPool Bef', 'Txn Proc (ms)', 'Cons (ms)', 'TxPool Aft', '#Txns', 'MB Size (bytes)', 'Block Time (ms)', 'Gas Used', 'TPS']))
 
 def save_to_csv(list_of_items):
     with open(CSV_FILENAME, 'a', newline='\n') as csvfile:

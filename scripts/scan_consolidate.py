@@ -42,8 +42,9 @@ KEYWORD_DONE = 'DONE'
 KEYWORD_MBWAIT = '[MIBLKSWAIT]'
 KEYWORD_FBCON = '[FBCON]'
 KEYWORD_TXNPKT = '[TXNPKT]'
-KEYWORD_TXNPKT_BEG = '[TXNPKT-BEG]'
-KEYWORD_TXNPKT_END = '[TXNPKT-END]'
+KEYWORD_TXNPKT_RCVD = '[TXNPKT-RCVD]'
+KEYWORD_TXNPKTPROC_BEG = '[TXNPKTPROC-BEG]'
+KEYWORD_TXNPKTPROC_END = '[TXNPKTPROC-END]'
 KEYWORD_FLBLK = '[FLBLKRECV]'
 KEYWORD_PUBKEY = '[IDENT]'
 KEYWORD_TXNPROC_BEG = '[TXNPROC-BEG]'
@@ -215,7 +216,20 @@ def search_ds(txpkt_stats, lookup_ident, txpool_stats):
                     get_MBWAIT_FBCON(ds_wait_times_tmp, ds_wait_times, line)
                 elif line.find(KEYWORD_FBCON) != -1:
                     get_MBWAIT_FBCON(ds_consensus_times_tmp, ds_consensus_times, line)
-                elif line.find(KEYWORD_TXNPKT_BEG) != -1:
+                elif line.find(KEYWORD_TXNPKT_RCVD) != -1:
+                    pkt_rcvd_time, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
+                    lookup_index = lookup_ident[pubkey]
+                    lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
+                    if epoch_num not in txpkt_stats:
+                        txpkt_stats[epoch_num] = {}
+                    if shard_id not in txpkt_stats[epoch_num]:
+                        txpkt_stats[epoch_num][shard_id] = {}
+                    if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
+                        txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
+                    if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
+                        txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][0] = pkt_rcvd_time    
+                elif line.find(KEYWORD_TXNPKTPROC_BEG) != -1:
                     proc_time_beg, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
                     lookup_index = lookup_ident[pubkey]
                     lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
@@ -226,9 +240,9 @@ def search_ds(txpkt_stats, lookup_ident, txpool_stats):
                     if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
                         txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
                     if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
-                        txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, pkt_size]
-                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][0] = proc_time_beg
-                elif line.find(KEYWORD_TXNPKT_END) != -1:
+                        txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][1] = proc_time_beg
+                elif line.find(KEYWORD_TXNPKTPROC_END) != -1:
                     proc_time_end, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
                     lookup_index = lookup_ident[pubkey]
                     lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
@@ -239,8 +253,8 @@ def search_ds(txpkt_stats, lookup_ident, txpool_stats):
                     if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
                         txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
                     if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
-                        txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, pkt_size]
-                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][1] = proc_time_end
+                        txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][2] = proc_time_end
                 elif line.find(KEYWORD_TXNPROC_BEG) != -1:
                     epoch_num, shard_id, num_tx = get_TXNPROC_BEG(line)
                     if epoch_num not in txpool_stats:
@@ -267,9 +281,9 @@ def search_ds(txpkt_stats, lookup_ident, txpool_stats):
                 else:
                     txpkt_stats[epoch_num][shard_id][lookup_pkt] = \
                         [0, \
-                        max((vals[1] - vals[0]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
+                        max((vals[2] - vals[1]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
                         len(txpkt_stats[epoch_num][shard_id][lookup_pkt]), \
-                        max(vals[2] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
+                        max(vals[3] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
 
     return ds_consensus_times, ds_wait_times, txpkt_stats, txpool_stats
 
@@ -305,7 +319,20 @@ def search_normal(num_shards, lookup_ident, lookup_info):
                 if shard_id not in fb_receipt_times[epoch_num]:
                     fb_receipt_times[epoch_num][shard_id] = {}
                 fb_receipt_times[epoch_num][shard_id][fileName] = receipt_time
-            elif line.find(KEYWORD_TXNPKT_BEG) != -1:
+            elif line.find(KEYWORD_TXNPKT_RCVD) != -1:
+                pkt_rcvd_time, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
+                lookup_index = lookup_ident[pubkey]
+                lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
+                if epoch_num not in txpkt_stats:
+                    txpkt_stats[epoch_num] = {}
+                if shard_id not in txpkt_stats[epoch_num]:
+                    txpkt_stats[epoch_num][shard_id] = {}
+                if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
+                if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][0] = pkt_rcvd_time
+            elif line.find(KEYWORD_TXNPKTPROC_BEG) != -1:
                 proc_time_beg, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
                 lookup_index = lookup_ident[pubkey]
                 lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
@@ -316,9 +343,9 @@ def search_normal(num_shards, lookup_ident, lookup_info):
                 if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
                     txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
                 if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
-                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, pkt_size]
-                txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][0] = proc_time_beg
-            elif line.find(KEYWORD_TXNPKT_END) != -1:
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][1] = proc_time_beg
+            elif line.find(KEYWORD_TXNPKTPROC_END) != -1:
                 proc_time_end, epoch_num, pkt_epoch, pkt_size, shard_id, pubkey = get_TXNPKT_normal(line)
                 lookup_index = lookup_ident[pubkey]
                 lookup_pkt = 'L' + str(lookup_index) + 'E' + str(pkt_epoch)
@@ -329,8 +356,8 @@ def search_normal(num_shards, lookup_ident, lookup_info):
                 if lookup_pkt not in txpkt_stats[epoch_num][shard_id]:
                     txpkt_stats[epoch_num][shard_id][lookup_pkt] = {}
                 if fileName not in txpkt_stats[epoch_num][shard_id][lookup_pkt]:
-                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, pkt_size]
-                txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][1] = proc_time_end
+                    txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName] = [0, 0, 0, pkt_size]
+                txpkt_stats[epoch_num][shard_id][lookup_pkt][fileName][2] = proc_time_end
             elif line.find(KEYWORD_TXNPROC_BEG) != -1:
                 epoch_num, shard_id, num_tx = get_TXNPROC_BEG(line)
                 if epoch_num not in txpool_stats:
@@ -357,15 +384,15 @@ def search_normal(num_shards, lookup_ident, lookup_info):
                     if epoch_num % num_fblk_per_pow == 0:
                         txpkt_stats[epoch_num][shard_id][lookup_pkt] = \
                             [0, \
-                            max((vals[1] - vals[0]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
+                            max((vals[2] - vals[1]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
                             len(txpkt_stats[epoch_num][shard_id][lookup_pkt]), \
-                            max(vals[2] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
+                            max(vals[3] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
                     else:
                         txpkt_stats[epoch_num][shard_id][lookup_pkt] = \
                             [max((vals[0] - lookup_info[epoch_num-1][3][shard_id][2]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
-                            max((vals[1] - vals[0]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
+                            max((vals[2] - vals[1]) for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items())), \
                             len(txpkt_stats[epoch_num][shard_id][lookup_pkt]), \
-                            max(vals[2] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
+                            max(vals[3] for fileName, vals in list(txpkt_stats[epoch_num][shard_id][lookup_pkt].items()))]
     return mb_time_infos, txpkt_stats, txpool_stats
 
 # ===========================

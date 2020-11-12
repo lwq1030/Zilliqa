@@ -1908,7 +1908,7 @@ bool Node::ProcessTxnPacketFromLookupCore(const bytes& message,
     int64_t epoch = (m_mediator.m_ds->m_mode == DirectoryService::Mode::IDLE)
                         ? epochNum
                         : m_mediator.m_currentEpochNum;
-    LOG_STATE("[TXNPKT-BEG]["
+    LOG_STATE("[TXNPKT-RCVD]["
               << epoch << "] PktEpoch=" << epochNum
               << " PktSize=" << message.size() << " Shard=" << shardId
               << " Lookup=" << string(lookupPubKey).substr(0, 8));
@@ -2042,6 +2042,16 @@ bool Node::ProcessTxnPacketFromLookupCore(const bytes& message,
                       [this] { return m_state == MICROBLOCK_CONSENSUS_PREP; });
   }
 
+  if (LOG_PARAMETERS) {
+    int64_t epoch = (m_mediator.m_ds->m_mode == DirectoryService::Mode::IDLE)
+                        ? epochNum
+                        : m_mediator.m_currentEpochNum;
+    LOG_STATE("[TXNPKTPROC-BEG]["
+              << epoch << "] PktEpoch=" << epochNum
+              << " PktSize=" << message.size() << " Shard=" << shardId
+              << " Lookup=" << string(lookupPubKey).substr(0, 8));
+  }
+
   // Process the txns
   unsigned int processed_count = 0;
 
@@ -2110,7 +2120,7 @@ bool Node::ProcessTxnPacketFromLookupCore(const bytes& message,
   }
 
   if (LOG_PARAMETERS) {
-    LOG_STATE("[TXNPKT-END]["
+    LOG_STATE("[TXNPKTPROC-END]["
               << m_mediator.m_currentEpochNum << "] PktEpoch=" << epochNum
               << " PktSize=" << message.size() << " Shard=" << shardId
               << " Lookup=" << string(lookupPubKey).substr(0, 8));

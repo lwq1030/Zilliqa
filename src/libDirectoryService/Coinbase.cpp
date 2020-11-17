@@ -131,7 +131,7 @@ bool DirectoryService::SaveCoinbase(const vector<bool>& b1,
   }
 }
 
-void DirectoryService::InitCoinbase() {
+void DirectoryService::InitCoinbase(bool coinbaseAppendLookup) {
   if (LOOKUP_NODE_MODE) {
     LOG_GENERAL(WARNING,
                 "DirectoryService::InitCoinbase not "
@@ -160,12 +160,14 @@ void DirectoryService::InitCoinbase() {
       ++it;
   }
 
-  const auto& vecLookup = m_mediator.m_lookup->GetLookupNodesStatic();
   const auto& epochNum = m_mediator.m_currentEpochNum;
 
-  for (const auto& lookupNode : vecLookup) {
-    m_coinbaseRewardees[epochNum][CoinbaseReward::LOOKUP_REWARD].push_back(
-        lookupNode.first);
+  if (coinbaseAppendLookup) {
+    const auto& vecLookup = m_mediator.m_lookup->GetLookupNodesStatic();
+    for (const auto& lookupNode : vecLookup) {
+      m_coinbaseRewardees[epochNum][CoinbaseReward::LOOKUP_REWARD].push_back(
+          lookupNode.first);
+    }
   }
 
   if (m_coinbaseRewardees.size() < NUM_FINAL_BLOCK_PER_POW - 1) {

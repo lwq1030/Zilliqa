@@ -1094,7 +1094,8 @@ bool DirectoryService::RunConsensusOnFinalBlockWhenDSBackup() {
   return true;
 }
 
-void DirectoryService::PrepareRunConsensusOnFinalBlockNormal() {
+void DirectoryService::PrepareRunConsensusOnFinalBlockNormal(
+    bool coinbaseAppendLookup) {
   if (LOOKUP_NODE_MODE) {
     LOG_GENERAL(
         WARNING,
@@ -1113,7 +1114,7 @@ void DirectoryService::PrepareRunConsensusOnFinalBlockNormal() {
     // Coinbase
     LOG_EPOCH(INFO, m_mediator.m_currentEpochNum, "[CNBSE]");
 
-    InitCoinbase();
+    InitCoinbase(coinbaseAppendLookup);
     AccountStore::GetInstance().SerializeDelta();
   }
 }

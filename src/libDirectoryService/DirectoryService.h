@@ -153,6 +153,7 @@ class DirectoryService : public Executable {
   std::mutex m_mutexPendingDSBlock;
 
   // Final block consensus variables
+  std::mutex m_mutexFinalBlock;
   std::shared_ptr<TxBlock> m_finalBlock;
 
   struct MBSubmissionBufferEntry {
@@ -359,7 +360,7 @@ class DirectoryService : public Executable {
                          const StateHash& microBlockStateDeltaHash,
                          const BlockHash& microBlockHash);
   void SkipDSMicroBlock();
-  void PrepareRunConsensusOnFinalBlockNormal();
+  void PrepareRunConsensusOnFinalBlockNormal(bool coinbaseAppendLookup = true);
 
   // FinalBlockValidator functions
   bool CheckBlockHash();
@@ -603,7 +604,7 @@ class DirectoryService : public Executable {
   // Coinbase
   bool SaveCoinbase(const std::vector<bool>& b1, const std::vector<bool>& b2,
                     const int32_t& shard_id, const uint64_t& epochNum);
-  void InitCoinbase();
+  void InitCoinbase(bool coinbaseAppendLookup = true);
   void StoreCoinbaseInDiagnosticDB(const DiagnosticDataCoinbase& entry);
 
   template <class Container>
